@@ -1,0 +1,44 @@
+[extend]
+useDefault = true
+
+[[rules]]
+id = "kis-appkey"
+description = "KIS API App Key"
+regex = '''PSbL[A-Za-z0-9]{20,}'''
+tags = ["key", "kis"]
+
+[[rules]]
+id = "account-number"
+description = "Korean securities account number"
+regex = '''\d{8}-\d{2}'''
+tags = ["account", "pii"]
+
+  [rules.allowlist]
+  regexTarget = "line"
+  regexes = [
+    '''12345678-01''',
+    '''00000000-01''',
+  ]
+
+[[rules]]
+id = "supabase-service-key"
+description = "Supabase service role key"
+regex = '''eyJ[A-Za-z0-9_-]{100,}'''
+tags = ["key", "supabase"]
+
+[[rules]]
+id = "hardcoded-amount"
+description = "Large hardcoded KRW amounts (potential asset data)"
+regex = '''[^0-9a-fA-F]\d{9,}[^0-9a-fA-F]'''
+tags = ["pii", "amount"]
+
+[allowlist]
+paths = [
+  '''\.env\.example''',
+  '''docs/.*\.md''',
+  '''.*\.test\.(ts|tsx)''',
+  '''package-lock\.json''',
+  '''node_modules/.*''',
+  '''tsconfig\.tsbuildinfo''',
+  '''\.next/.*''',
+]
