@@ -1,0 +1,26 @@
+# 환경변수
+.env
+.env.*
+!.env.example
+
+# 비공개 개인 문서 (자산 정보, 개인 맥락)
+.private/
+
+# Claude/MCP 설정
+.mcp.json
+
+# Vercel 프로젝트 링크
+.vercel/
+
+# OS/IDE
+.DS_Store
+*.swp
+.idea/
+.vscode/settings.json
+
+# 의존성
+node_modules/
+
+# 빌드
+.next/
+out/
