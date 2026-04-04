@@ -1,5 +1,5 @@
 export { cacheGet, cacheSet, cacheClear, cacheGetTimestamp } from "./indexeddb";
-export { CACHE_TTL, type CacheDataType } from "./policies";
+export { CACHE_TTL, getCacheTTL, type CacheDataType } from "./policies";
 
 /**
  * Generate a cache key from an API path and optional params.

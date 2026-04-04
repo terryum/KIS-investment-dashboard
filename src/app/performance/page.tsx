@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { format } from "date-fns";
+import { type DateRange } from "react-day-picker";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PeriodSelector, getDateRange, type Period } from "@/components/performance/period-selector";
 import { ReturnsSummaryCard } from "@/components/performance/returns-summary-card";
 import { ReturnsLineChart } from "@/components/performance/returns-line-chart";
 import { UnrealizedPnLCard } from "@/components/performance/unrealized-pnl-card";
 import { HoldingsReturnTable, type HoldingReturn } from "@/components/performance/holdings-return-table";
-import { SnapshotButton } from "@/components/performance/snapshot-button";
 import { MonthlyCashFlowChart } from "@/components/performance/monthly-cash-flow-chart";
 import { AssetGrowthBreakdownChart } from "@/components/performance/asset-growth-breakdown-chart";
 import { CashFlowTable } from "@/components/performance/cash-flow-table";
@@ -28,9 +29,26 @@ import {
 
 export default function PerformancePage() {
   const [period, setPeriod] = useState<Period>("3M");
+  const [customRange, setCustomRange] = useState<DateRange | undefined>();
   const [incomeYear, setIncomeYear] = useState(() => new Date().getFullYear());
 
-  const { from, to } = getDateRange(period);
+  const handlePeriodSelect = (p: Period) => {
+    setPeriod(p);
+  };
+
+  const handleCustomRangeApply = (range: DateRange) => {
+    setCustomRange(range);
+    setPeriod("CUSTOM");
+  };
+
+  const { from, to } =
+    period === "CUSTOM" && customRange?.from && customRange?.to
+      ? {
+          from: format(customRange.from, "yyyy-MM-dd"),
+          to: format(customRange.to, "yyyy-MM-dd"),
+        }
+      : getDateRange(period);
+
   const { data: snapshots = [] } = useSnapshots(from, to);
   const { data: latestSnapshot } = useLatestSnapshot();
   const { data: cashFlows = [] } = useCashFlows();
@@ -41,9 +59,6 @@ export default function PerformancePage() {
   const earliest = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
   const latest = snapshots.length > 0 ? snapshots[0] : latestSnapshot ?? null;
 
-  // Extract holdings from latest snapshot for the table
-  // The snapshot API returns aggregate data; holdings come from holding_snapshots
-  // For now, we show an empty table as holdings need a separate endpoint
   const holdingsData: HoldingReturn[] = [];
 
   return (
@@ -59,16 +74,20 @@ export default function PerformancePage() {
 
         <TabsContent value="returns">
           <div className="space-y-4 pt-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <PeriodSelector selected={period} onSelect={setPeriod} />
-              <SnapshotButton />
-            </div>
+            <PeriodSelector
+              selected={period}
+              onSelect={handlePeriodSelect}
+              customRange={customRange}
+              onCustomRangeApply={handleCustomRangeApply}
+            />
             <div className="grid gap-4 md:grid-cols-2">
               <ReturnsSummaryCard latest={latest} earliest={earliest} />
               <UnrealizedPnLCard snapshot={latestSnapshot ?? null} />
             </div>
             <ReturnsLineChart snapshots={snapshots} />
-            <HoldingsReturnTable holdings={holdingsData} />
+            <div className="max-h-96 overflow-y-auto">
+              <HoldingsReturnTable holdings={holdingsData} />
+            </div>
           </div>
         </TabsContent>
 
@@ -79,7 +98,9 @@ export default function PerformancePage() {
             </div>
             <MonthlyCashFlowChart data={monthlyCashFlows} />
             <AssetGrowthBreakdownChart snapshots={snapshots} />
-            <CashFlowTable cashFlows={cashFlows} />
+            <div className="max-h-96 overflow-y-auto">
+              <CashFlowTable cashFlows={cashFlows} />
+            </div>
           </div>
         </TabsContent>
 
@@ -90,7 +111,9 @@ export default function PerformancePage() {
               <IncomeSummaryCard summaries={incomeSummary} year={incomeYear} />
               <IncomeTypeChart summaries={incomeSummary} year={incomeYear} />
             </div>
-            <IncomeTable incomes={incomes} />
+            <div className="max-h-96 overflow-y-auto">
+              <IncomeTable incomes={incomes} />
+            </div>
             <DividendScheduleCard incomes={incomes} />
           </div>
         </TabsContent>

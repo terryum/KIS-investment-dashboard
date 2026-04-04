@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { type DateRange } from "react-day-picker";
+import { DateRangePicker } from "./date-range-picker";
 
 const PERIODS = [
   { label: "1W", value: "1W" },
@@ -13,11 +15,13 @@ const PERIODS = [
   { label: "ALL", value: "ALL" },
 ] as const;
 
-export type Period = (typeof PERIODS)[number]["value"];
+export type Period = (typeof PERIODS)[number]["value"] | "CUSTOM";
 
 interface PeriodSelectorProps {
   selected: Period;
   onSelect: (period: Period) => void;
+  customRange: DateRange | undefined;
+  onCustomRangeApply: (range: DateRange) => void;
 }
 
 export function getDateRange(period: Period): { from: string; to: string } {
@@ -47,12 +51,20 @@ export function getDateRange(period: Period): { from: string; to: string } {
     case "ALL":
       from.setFullYear(2020, 0, 1);
       break;
+    case "CUSTOM":
+      // Custom range handled externally
+      return { from: to, to };
   }
 
   return { from: from.toISOString().split("T")[0], to };
 }
 
-export function PeriodSelector({ selected, onSelect }: PeriodSelectorProps) {
+export function PeriodSelector({
+  selected,
+  onSelect,
+  customRange,
+  onCustomRangeApply,
+}: PeriodSelectorProps) {
   return (
     <div className="flex flex-wrap gap-1">
       {PERIODS.map((p) => (
@@ -66,6 +78,11 @@ export function PeriodSelector({ selected, onSelect }: PeriodSelectorProps) {
           {p.label}
         </Button>
       ))}
+      <DateRangePicker
+        dateRange={customRange}
+        onApply={onCustomRangeApply}
+        isActive={selected === "CUSTOM"}
+      />
     </div>
   );
 }

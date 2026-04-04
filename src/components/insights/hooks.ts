@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getStaleTimeUntil6AM } from "@/lib/utils/cache-time";
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { credentials: "include" });
@@ -46,7 +47,7 @@ export function useNews(ticker?: string) {
   return useQuery<NewsItem[]>({
     queryKey: ["market", "news", ticker],
     queryFn: () => fetchJson(`/api/market/news${qs ? `?${qs}` : ""}`),
-    staleTime: 5 * 60 * 1000,
+    staleTime: getStaleTimeUntil6AM(),
   });
 }
 
@@ -70,7 +71,7 @@ export function useSources() {
   return useQuery<Source[]>({
     queryKey: ["market", "sources"],
     queryFn: () => fetchJson("/api/market/sources"),
-    staleTime: 5 * 60 * 1000,
+    staleTime: getStaleTimeUntil6AM(),
   });
 }
 
@@ -136,7 +137,7 @@ export function useWatchlist() {
   return useQuery<WatchlistItem[]>({
     queryKey: ["watchlist"],
     queryFn: () => fetchJson("/api/watchlist"),
-    staleTime: 5 * 60 * 1000,
+    staleTime: getStaleTimeUntil6AM(),
   });
 }
 

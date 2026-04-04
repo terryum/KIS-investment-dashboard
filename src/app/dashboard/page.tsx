@@ -8,6 +8,8 @@ import {
   useIncomeSummary,
 } from "@/hooks/use-portfolio";
 import { useAssetClassAllocation } from "@/hooks/use-allocation";
+import { useChangeDetection } from "@/hooks/use-change-detection";
+import { ChangesPopup } from "@/components/common/changes-popup";
 import { TotalAssetCard } from "@/components/dashboard/total-asset-card";
 import { DailyChangeCard } from "@/components/dashboard/daily-change-card";
 import { AssetAllocationMiniChart } from "@/components/dashboard/asset-allocation-mini-chart";
@@ -23,6 +25,7 @@ export default function DashboardPage() {
   const snapshots = useSnapshots();
   const incomeSummary = useIncomeSummary();
   const assetClassAllocation = useAssetClassAllocation();
+  const changeDetection = useChangeDetection();
 
   // Compute totals from holdings (0 while loading)
   const holdingsList = holdings.data?.holdings ?? [];
@@ -46,6 +49,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4">
+      <ChangesPopup changes={changeDetection} isReady={changeDetection.isReady} />
       <h2 className="text-2xl font-bold">대시보드</h2>
 
       {/* Top summary row — each card handles its own loading state */}

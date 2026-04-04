@@ -33,5 +33,13 @@ export function usePrefetchDashboard() {
     prefetchQuery(["snapshots", undefined, undefined], "/api/snapshots", 10 * 60 * 1000);
     prefetchQuery(["income", "summary", "all"], "/api/income/summary", 10 * 60 * 1000);
     prefetchQuery(["allocation", "asset-class"], "/api/allocation/asset-class", 5 * 60 * 1000);
+
+    // Auto daily snapshot on first login
+    fetch("/api/snapshots/auto", {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => {
+      // Silent fail — snapshot is best-effort
+    });
   }, [queryClient]);
 }

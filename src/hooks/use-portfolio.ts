@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { getStaleTimeUntil6AM } from "@/lib/utils/cache-time";
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { credentials: "include" });
@@ -96,7 +97,7 @@ export function usePortfolioBalance(accountNo?: string) {
   return useQuery({
     queryKey: ["portfolio", "balance", accountNo ?? "all"],
     queryFn: () => fetchJson<UnifiedBalance>(url),
-    staleTime: 2 * 60 * 1000,
+    staleTime: getStaleTimeUntil6AM(),
   });
 }
 
@@ -128,7 +129,7 @@ export function useHoldings(accountNo?: string) {
   return useQuery({
     queryKey: ["holdings", "current", accountNo ?? "all"],
     queryFn: () => fetchJson<HoldingsData>(url),
-    staleTime: 2 * 60 * 1000,
+    staleTime: getStaleTimeUntil6AM(),
   });
 }
 
@@ -154,7 +155,7 @@ export function useManualAssets() {
   return useQuery({
     queryKey: ["manual-assets"],
     queryFn: () => fetchJson<ManualAsset[]>("/api/manual-assets"),
-    staleTime: 5 * 60 * 1000,
+    staleTime: getStaleTimeUntil6AM(),
   });
 }
 
@@ -179,7 +180,7 @@ export function useLatestSnapshot() {
   return useQuery({
     queryKey: ["snapshots", "latest"],
     queryFn: () => fetchJson<Snapshot>("/api/snapshots/latest"),
-    staleTime: 10 * 60 * 1000,
+    staleTime: getStaleTimeUntil6AM(),
   });
 }
 
@@ -191,7 +192,7 @@ export function useSnapshots(from?: string, to?: string) {
   return useQuery({
     queryKey: ["snapshots", from, to],
     queryFn: () => fetchJson<Snapshot[]>(`/api/snapshots${qs ? `?${qs}` : ""}`),
-    staleTime: 10 * 60 * 1000,
+    staleTime: getStaleTimeUntil6AM(),
   });
 }
 
@@ -211,6 +212,6 @@ export function useIncomeSummary(year?: number) {
   return useQuery({
     queryKey: ["income", "summary", year ?? "all"],
     queryFn: () => fetchJson<IncomeSummary[]>(url),
-    staleTime: 10 * 60 * 1000,
+    staleTime: getStaleTimeUntil6AM(),
   });
 }

@@ -128,3 +128,34 @@
     @apply font-sans;
   }
 }
+
+/* Card loading sliding bar */
+@keyframes slide-loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.animate-slide-loading {
+  animation: slide-loading 1.2s ease-in-out infinite;
+}
+
+/* Fade-out for "로딩 완료" text */
+@keyframes fade-out {
+  0% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-fade-out {
+  animation: fade-out 1.5s ease-out forwards;
+}

@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/weekly-snapshot",
-      "schedule": "0 7 * * 5"
+      "schedule": "0 21 * * 5"
     },
     {
       "path": "/api/cron/detect-income",

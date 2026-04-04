@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getStaleTimeUntil6AM } from "@/lib/utils/cache-time";
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { credentials: "include" });
@@ -79,7 +80,7 @@ export function useJournals(filters: JournalFilters = {}) {
   return useQuery<{ data: Journal[]; count: number }>({
     queryKey: ["journals", filters],
     queryFn: () => fetchJson(`/api/journals${qs ? `?${qs}` : ""}`),
-    staleTime: 2 * 60 * 1000,
+    staleTime: getStaleTimeUntil6AM(),
   });
 }
 
@@ -93,7 +94,7 @@ export function useJournal(id: string | null) {
       return json.data;
     },
     enabled: !!id,
-    staleTime: 2 * 60 * 1000,
+    staleTime: getStaleTimeUntil6AM(),
   });
 }
 
