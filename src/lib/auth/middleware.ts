@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
 
+function parseCookie(cookieHeader: string, name: string): string | null {
+  const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 /**
  * PIN authentication middleware.
  * Verifies the x-pin-token header against the stored PIN hash.
@@ -12,7 +17,10 @@ import { supabaseAdmin } from '@/lib/supabase/server';
 export async function withAuth(
   request: Request,
 ): Promise<NextResponse | null> {
-  const pinToken = request.headers.get('x-pin-token');
+  // Check header first, then fall back to cookie
+  const pinToken =
+    request.headers.get('x-pin-token') ||
+    parseCookie(request.headers.get('cookie') || '', 'pin-token');
 
   if (!pinToken) {
     return NextResponse.json(

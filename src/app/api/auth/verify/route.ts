@@ -33,7 +33,17 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true, token: pinHash });
+    // Set httpOnly cookie for route protection (proxy.ts)
+    const response = NextResponse.json({ success: true });
+    response.cookies.set("pin-token", pinHash, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: 60 * 60 * 24, // 24 hours
+    });
+
+    return response;
   } catch {
     return NextResponse.json(
       { error: "Verification failed" },
