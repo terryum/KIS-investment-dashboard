@@ -6,7 +6,7 @@ import type { NextRequest } from 'next/server';
  * Redirects unauthenticated users to the login page (/).
  * Authentication is verified via the 'pin-token' cookie (httpOnly).
  */
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const pinToken = request.cookies.get('pin-token');
 
   // If no PIN cookie, redirect to login
