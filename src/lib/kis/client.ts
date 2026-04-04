@@ -150,18 +150,18 @@ export class KISClient {
     productCode: string,
   ): Promise<KISBondHolding[]> {
     const allBonds: KISBondHolding[] = [];
-    let trCont = 'N'; // first page
+    let ctxFk = '';
+    let ctxNk = '';
     const seenKeys = new Set<string>();
 
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    for (let page = 0; page < 10; page++) {
       const params = new URLSearchParams({
         CANO: accountNo.slice(0, 8),
         ACNT_PRDT_CD: productCode,
         BND_BUY_DVSN_CD: '',
         BND_PR_DVSN_CD: '',
-        CTX_AREA_FK100: '',
-        CTX_AREA_NK100: '',
+        CTX_AREA_FK100: ctxFk,
+        CTX_AREA_NK100: ctxNk,
       });
 
       const { data, responseTrCont } = await this.requestWithTrCont<
@@ -170,10 +170,15 @@ export class KISClient {
         '/uapi/domestic-bond/v1/trading/inquire-balance',
         'CTSC8407R',
         params,
-        trCont,
+        page === 0 ? 'N' : 'N',
       );
 
-      const holdings = Array.isArray(data.output1) ? data.output1 : [];
+      // Bond API returns data in 'output' field (not 'output1')
+      const holdings = Array.isArray(data.output)
+        ? data.output
+        : Array.isArray(data.output1)
+          ? data.output1
+          : [];
 
       for (const bond of holdings) {
         const key = `${bond.pdno}|${bond.buy_dt}|${bond.buy_sqno}`;
@@ -183,9 +188,12 @@ export class KISClient {
         }
       }
 
+      // Update pagination context (uses fk200/nk200)
+      ctxFk = data.ctx_area_fk200 ?? '';
+      ctxNk = data.ctx_area_nk200 ?? '';
+
       // 'D' = last page, 'M' = more pages
       if (responseTrCont !== 'M' || holdings.length === 0) break;
-      trCont = '';
     }
 
     return allBonds;

@@ -31,10 +31,13 @@ export interface KISApiResponse<T = unknown> {
   rt_cd: string;   // '0' = success
   msg_cd: string;
   msg1: string;
+  output?: T;       // Bond API (CTSC8407R) uses 'output' instead of 'output1'
   output1?: T;
   output2?: unknown;
   ctx_area_fk100?: string;
   ctx_area_nk100?: string;
+  ctx_area_fk200?: string;  // Bond API uses fk200/nk200 for pagination context
+  ctx_area_nk200?: string;
 }
 
 export interface KISErrorInfo {
