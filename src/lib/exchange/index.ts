@@ -16,8 +16,8 @@ interface EximBankRate {
 export async function fetchExchangeRates(
   date?: Date,
 ): Promise<{ currency: string; rate: number; date: string }[]> {
-  const apiKey = process.env.EXIMBANK_API_KEY;
-  if (!apiKey) throw new Error('EXIMBANK_API_KEY not configured');
+  const apiKey = process.env.KOREAEXIM_API_KEY;
+  if (!apiKey) throw new Error('KOREAEXIM_API_KEY not configured');
 
   const targetDate = date ?? new Date();
 
