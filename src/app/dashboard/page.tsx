@@ -15,7 +15,6 @@ import { TopHoldingsBarList } from "@/components/dashboard/top-holdings-bar-list
 import { PortfolioValueMiniChart } from "@/components/dashboard/portfolio-value-mini-chart";
 import { RecentIncomeCard } from "@/components/dashboard/recent-income-card";
 import { ManualAssetsSummaryCard } from "@/components/dashboard/manual-assets-summary-card";
-import { LoadingProgress } from "@/components/common/loading-progress";
 
 export default function DashboardPage() {
   const holdings = useHoldings();
@@ -25,10 +24,7 @@ export default function DashboardPage() {
   const incomeSummary = useIncomeSummary();
   const assetClassAllocation = useAssetClassAllocation();
 
-  const isLoading =
-    holdings.isLoading || manualAssets.isLoading;
-
-  // Compute totals from holdings
+  // Compute totals from holdings (0 while loading)
   const holdingsList = holdings.data?.holdings ?? [];
   const totalEvaluation = holdingsList.reduce(
     (sum, h) => sum + h.evaluation_amount,
@@ -42,37 +38,28 @@ export default function DashboardPage() {
   const totalPnlPercent =
     totalPurchase > 0 ? (totalPnl / totalPurchase) * 100 : 0;
 
-  // Include manual assets in total
   const manualTotal = (manualAssets.data ?? []).reduce(
     (sum, a) => sum + (a.is_liability ? -a.current_value : a.current_value),
     0,
   );
   const grandTotal = totalEvaluation + manualTotal;
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">대시보드</h2>
-        <LoadingProgress current={0} total={6} label="데이터 로딩 중" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">대시보드</h2>
 
-      {/* Top summary row */}
+      {/* Top summary row — each card handles its own loading state */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <TotalAssetCard
           totalValue={grandTotal}
           previousSnapshot={latestSnapshot.data}
-          isLoading={latestSnapshot.isLoading}
+          isLoading={holdings.isLoading || manualAssets.isLoading}
         />
         <DailyChangeCard
           totalPnl={totalPnl}
           totalPnlPercent={totalPnlPercent}
           totalPurchase={totalPurchase}
+          isLoading={holdings.isLoading}
         />
         <AssetAllocationMiniChart
           data={assetClassAllocation.data}
