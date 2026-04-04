@@ -60,9 +60,14 @@ export class AccountManager {
     filterAccountNo?: string,
   ): Promise<UnifiedBalance> {
     const accounts = await this.getActiveAccounts();
-    const filtered = filterAccountNo
+    // Filter by specific account if requested, and exclude CMA (product code 21) which is API-unsupported
+    const filtered = (filterAccountNo
       ? accounts.filter((a) => a.account_no === filterAccountNo)
-      : accounts;
+      : accounts
+    ).filter((a) => {
+      const productCode = a.account_no.split('-')[1];
+      return productCode !== '21'; // CMA accounts are not queryable via KIS API
+    });
 
     const result: UnifiedBalance = {
       domestic: [],
