@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { getSecondsUntil6AM } from "@/lib/utils/cache-time";
 
 function parseDevice(ua: string): string {
   if (/iPhone/i.test(ua)) return "Safari on iPhone";
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
-      maxAge: 60 * 60 * 24,
+      maxAge: getSecondsUntil6AM(), // Expires at next 6:00 AM KST → daily re-login required
     });
 
     return response;

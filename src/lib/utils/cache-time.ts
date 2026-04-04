@@ -31,3 +31,11 @@ export function getStaleTimeUntil6AM(): number {
 
   return Math.max(next6amUtc - now, 60 * 1000);
 }
+
+/**
+ * Returns seconds until next 6:00 AM KST.
+ * For use in cookie maxAge (which expects seconds, not milliseconds).
+ */
+export function getSecondsUntil6AM(): number {
+  return Math.floor(getStaleTimeUntil6AM() / 1000);
+}

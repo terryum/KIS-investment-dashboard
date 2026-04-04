@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { withAuth } from "@/lib/auth/middleware";
+import { getSecondsUntil6AM } from "@/lib/utils/cache-time";
 
 export async function POST(request: Request) {
   const authError = await withAuth(request);
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
-      maxAge: 60 * 60 * 24,
+      maxAge: getSecondsUntil6AM(),
     });
 
     return response;
