@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoneyDisplay } from "@/components/common/money-display";
 import type { ManualAsset } from "@/hooks/use-portfolio";
+import { CardLoading } from "@/components/common/card-loading";
 
 interface ManualAssetsSummaryCardProps {
   assets?: ManualAsset[];
@@ -20,7 +21,7 @@ export function ManualAssetsSummaryCard({
           <CardTitle>수동 자산</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-16 animate-pulse rounded bg-muted" />
+          <CardLoading />
         </CardContent>
       </Card>
     );

@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { Snapshot } from "@/hooks/use-portfolio";
+import { CardLoading } from "@/components/common/card-loading";
 
 interface PortfolioValueMiniChartProps {
   snapshots?: Snapshot[];
@@ -29,7 +30,7 @@ export function PortfolioValueMiniChart({
         <CardContent>
           <div className="flex items-center justify-center h-[180px] text-sm text-muted-foreground">
             {isLoading ? (
-              <div className="h-full w-full animate-pulse rounded bg-muted" />
+              <CardLoading />
             ) : (
               "스냅샷 데이터가 없습니다"
             )}

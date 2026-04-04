@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoneyDisplay } from "@/components/common/money-display";
 import { PercentDisplay } from "@/components/common/percent-display";
+import { CardLoading } from "@/components/common/card-loading";
 import type { Snapshot } from "@/hooks/use-portfolio";
 
 interface TotalAssetCardProps {
@@ -31,7 +32,7 @@ export function TotalAssetCard({
           <CardTitle>총 자산</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-10 w-48 animate-pulse rounded bg-muted" />
+          <CardLoading label="자산 데이터 로딩 중..." />
         </CardContent>
       </Card>
     );

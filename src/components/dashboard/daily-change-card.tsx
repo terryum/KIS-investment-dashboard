@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoneyDisplay } from "@/components/common/money-display";
 import { PercentDisplay } from "@/components/common/percent-display";
+import { CardLoading } from "@/components/common/card-loading";
 
 interface DailyChangeCardProps {
   totalPnl: number;
@@ -24,7 +25,7 @@ export function DailyChangeCard({
           <CardTitle>평가 손익</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-10 w-36 animate-pulse rounded bg-muted" />
+          <CardLoading label="손익 데이터 로딩 중..." />
         </CardContent>
       </Card>
     );

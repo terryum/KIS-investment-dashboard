@@ -9,6 +9,7 @@ import {
 } from "@/hooks/use-portfolio";
 import { useAssetClassAllocation } from "@/hooks/use-allocation";
 import { useChangeDetection } from "@/hooks/use-change-detection";
+import { useLoadingTracker } from "@/hooks/use-loading-tracker";
 import { ChangesPopup } from "@/components/common/changes-popup";
 import { TotalAssetCard } from "@/components/dashboard/total-asset-card";
 import { DailyChangeCard } from "@/components/dashboard/daily-change-card";
@@ -26,6 +27,14 @@ export default function DashboardPage() {
   const incomeSummary = useIncomeSummary();
   const assetClassAllocation = useAssetClassAllocation();
   const changeDetection = useChangeDetection();
+
+  // Track loading state in global UI store → powers header progress bar
+  useLoadingTracker("holdings", "보유 종목", holdings.isLoading);
+  useLoadingTracker("manual-assets", "수동 자산", manualAssets.isLoading);
+  useLoadingTracker("snapshot-latest", "최근 스냅샷", latestSnapshot.isLoading);
+  useLoadingTracker("snapshots", "스냅샷 이력", snapshots.isLoading);
+  useLoadingTracker("income", "인컴 데이터", incomeSummary.isLoading);
+  useLoadingTracker("allocation", "자산 배분", assetClassAllocation.isLoading);
 
   // Compute totals from holdings (0 while loading)
   const holdingsList = holdings.data?.holdings ?? [];

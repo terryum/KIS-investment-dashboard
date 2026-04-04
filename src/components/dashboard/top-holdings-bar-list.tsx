@@ -11,6 +11,7 @@ import {
   Cell,
 } from "recharts";
 import type { AggregatedHolding } from "@/hooks/use-portfolio";
+import { CardLoading } from "@/components/common/card-loading";
 
 interface TopHoldingsBarListProps {
   holdings?: AggregatedHolding[];

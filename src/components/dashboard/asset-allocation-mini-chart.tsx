@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { AllocationResult } from "@/lib/allocation/types";
+import { CardLoading } from "@/components/common/card-loading";
 
 const ASSET_CLASS_COLORS: Record<string, string> = {
   주식: "#3b82f6",
@@ -39,7 +40,7 @@ export function AssetAllocationMiniChart({
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[180px]">
-            <div className="h-32 w-32 animate-pulse rounded-full bg-muted" />
+            <CardLoading />
           </div>
         </CardContent>
       </Card>

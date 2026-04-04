@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoneyDisplay } from "@/components/common/money-display";
 import type { IncomeSummary } from "@/hooks/use-portfolio";
+import { CardLoading } from "@/components/common/card-loading";
 
 interface RecentIncomeCardProps {
   data?: IncomeSummary[];
@@ -23,7 +24,7 @@ export function RecentIncomeCard({ data, isLoading }: RecentIncomeCardProps) {
           <CardTitle>올해 인컴</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-16 animate-pulse rounded bg-muted" />
+          <CardLoading />
         </CardContent>
       </Card>
     );
