@@ -11,6 +11,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 const PIN_LENGTH = 4;
@@ -23,6 +29,12 @@ async function hashPin(pin: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+interface LastLogin {
+  ip: string;
+  device: string;
+  at: string;
+}
+
 interface PinLoginProps {
   onSuccess: () => void;
 }
@@ -31,6 +43,8 @@ export function PinLogin({ onSuccess }: PinLoginProps) {
   const [digits, setDigits] = useState<string[]>(Array(PIN_LENGTH).fill(""));
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [lastLogin, setLastLogin] = useState<LastLogin | null>(null);
+  const [showLastLogin, setShowLastLogin] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const setPinVerified = useAuthStore((s) => s.setPinVerified);
 
@@ -59,10 +73,19 @@ export function PinLogin({ onSuccess }: PinLoginProps) {
           return;
         }
 
-        const { token } = (await res.json()) as { token: string };
-        localStorage.setItem("pin-token", token);
+        const result = (await res.json()) as {
+          success: boolean;
+          lastLogin: LastLogin | null;
+        };
+
         setPinVerified(true);
-        onSuccess();
+
+        if (result.lastLogin) {
+          setLastLogin(result.lastLogin);
+          setShowLastLogin(true);
+        } else {
+          onSuccess();
+        }
       } catch {
         setError("서버 연결에 실패했습니다");
         setDigits(Array(PIN_LENGTH).fill(""));
@@ -128,6 +151,26 @@ export function PinLogin({ onSuccess }: PinLoginProps) {
     [submit],
   );
 
+  function formatLoginTime(isoString: string): string {
+    const d = new Date(isoString);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+
+    const timeStr = d.toLocaleString("ko-KR", {
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    if (diffMin < 60) return `${timeStr} (${diffMin}분 전)`;
+    if (diffHour < 24) return `${timeStr} (${diffHour}시간 전)`;
+    return `${timeStr} (${diffDay}일 전)`;
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-sm">
@@ -172,6 +215,41 @@ export function PinLogin({ onSuccess }: PinLoginProps) {
           </Button>
         </CardContent>
       </Card>
+
+      <Dialog open={showLastLogin} onOpenChange={(open) => {
+        if (!open) {
+          setShowLastLogin(false);
+          onSuccess();
+        }
+      }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>마지막 로그인 정보</DialogTitle>
+          </DialogHeader>
+          {lastLogin && (
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">시간</span>
+                <span className="font-medium">{formatLoginTime(lastLogin.at)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">기기</span>
+                <span className="font-medium">{lastLogin.device}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">IP</span>
+                <span className="font-medium font-[family-name:var(--font-geist-mono)] text-xs">{lastLogin.ip}</span>
+              </div>
+              <p className="text-xs text-muted-foreground pt-2 border-t">
+                본인이 아닌 로그인이 의심되면 설정에서 PIN을 변경하세요.
+              </p>
+            </div>
+          )}
+          <Button className="w-full" onClick={() => { setShowLastLogin(false); onSuccess(); }}>
+            확인
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
