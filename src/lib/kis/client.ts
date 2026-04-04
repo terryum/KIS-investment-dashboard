@@ -155,22 +155,24 @@ export class KISClient {
     const seenKeys = new Set<string>();
 
     for (let page = 0; page < 10; page++) {
+      // Bond API uses CTX_AREA_FK200/NK200 (not FK100/NK100)
       const params = new URLSearchParams({
         CANO: accountNo.slice(0, 8),
         ACNT_PRDT_CD: productCode,
         BND_BUY_DVSN_CD: '',
         BND_PR_DVSN_CD: '',
-        CTX_AREA_FK100: ctxFk,
-        CTX_AREA_NK100: ctxNk,
+        CTX_AREA_FK200: ctxFk,
+        CTX_AREA_NK200: ctxNk,
       });
 
+      // First page: tr_cont='' (empty), subsequent pages: tr_cont='N'
       const { data, responseTrCont } = await this.requestWithTrCont<
         KISBondHolding[]
       >(
         '/uapi/domestic-bond/v1/trading/inquire-balance',
         'CTSC8407R',
         params,
-        page === 0 ? 'N' : 'N',
+        page === 0 ? '' : 'N',
       );
 
       // Bond API returns data in 'output' field (not 'output1')
@@ -188,11 +190,11 @@ export class KISClient {
         }
       }
 
-      // Update pagination context (uses fk200/nk200)
+      // Update pagination context from response body (fk200/nk200)
       ctxFk = data.ctx_area_fk200 ?? '';
       ctxNk = data.ctx_area_nk200 ?? '';
 
-      // 'D' = last page, 'M' = more pages
+      // 'M' = more pages, 'D'/'E' = last page
       if (responseTrCont !== 'M' || holdings.length === 0) break;
     }
 
