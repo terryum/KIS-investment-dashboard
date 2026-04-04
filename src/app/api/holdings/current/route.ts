@@ -2,10 +2,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { AccountManager, sanitizeError } from '@/lib/kis';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { getTodayKST } from '@/lib/utils/kst';
 
 /**
  * GET /api/holdings/current
  * Aggregated holdings across all accounts.
+ * Reads from Supabase (today's snapshot) first; falls back to KIS API.
  * Query: ?account_no= (optional, filter by specific account)
  */
 export async function GET(request: NextRequest) {
@@ -14,23 +16,36 @@ export async function GET(request: NextRequest) {
 
   try {
     const accountNo = request.nextUrl.searchParams.get('account_no') ?? undefined;
+    const today = getTodayKST();
+
+    // 1. Try today's snapshot from Supabase
+    let query = supabaseAdmin
+      .from('holding_snapshots')
+      .select('*')
+      .eq('date', today)
+      .order('evaluation_amount', { ascending: false });
+
+    if (accountNo) {
+      query = query.eq('account_no', accountNo);
+    }
+
+    const { data: holdings } = await query;
+
+    if (holdings && holdings.length > 0) {
+      return NextResponse.json({
+        data: {
+          holdings: aggregateHoldings(holdings),
+          foreign_cash: [], // Cash info not stored in holding_snapshots
+          source: 'supabase',
+        },
+      });
+    }
+
+    // 2. No snapshot today — fall back to KIS API
     const manager = new AccountManager(supabaseAdmin);
     const balance = await manager.fetchUnifiedBalance(accountNo);
 
-    // Aggregate holdings across all accounts by ticker
-    const aggregated = new Map<string, {
-      ticker: string;
-      name: string;
-      market: string;
-      quantity: number;
-      purchase_amount: number;
-      evaluation_amount: number;
-      pnl: number;
-      pnl_percent: number;
-      currency: string;
-      current_price: number;
-      avg_price: number;
-    }>();
+    const aggregated = new Map<string, AggregatedHolding>();
 
     // Domestic holdings
     for (const acct of balance.domestic) {
@@ -148,6 +163,7 @@ export async function GET(request: NextRequest) {
           currency: c.currency,
           amount: c.amount,
         })),
+        source: 'kis',
       },
     });
   } catch (err) {
@@ -157,4 +173,57 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
+}
+
+interface AggregatedHolding {
+  ticker: string;
+  name: string;
+  market: string;
+  quantity: number;
+  purchase_amount: number;
+  evaluation_amount: number;
+  pnl: number;
+  pnl_percent: number;
+  currency: string;
+  current_price: number;
+  avg_price: number;
+}
+
+/**
+ * Aggregate holding_snapshots rows by ticker (across accounts).
+ */
+function aggregateHoldings(holdings: any[]): AggregatedHolding[] {
+  const map = new Map<string, AggregatedHolding>();
+
+  for (const h of holdings) {
+    const existing = map.get(h.ticker);
+    if (existing) {
+      existing.quantity += h.quantity ?? 0;
+      existing.purchase_amount += h.purchase_amount ?? 0;
+      existing.evaluation_amount += h.evaluation_amount ?? 0;
+      existing.pnl += h.pnl ?? 0;
+      existing.pnl_percent = existing.purchase_amount > 0
+        ? ((existing.evaluation_amount - existing.purchase_amount) / existing.purchase_amount) * 100
+        : 0;
+      if ((h.current_price ?? 0) > 0) {
+        existing.current_price = h.current_price;
+      }
+    } else {
+      map.set(h.ticker, {
+        ticker: h.ticker,
+        name: h.name ?? '',
+        market: h.market ?? '',
+        quantity: h.quantity ?? 0,
+        purchase_amount: h.purchase_amount ?? 0,
+        evaluation_amount: h.evaluation_amount ?? 0,
+        pnl: h.pnl ?? 0,
+        pnl_percent: h.pnl_percent ?? 0,
+        currency: h.currency ?? 'KRW',
+        current_price: h.current_price ?? 0,
+        avg_price: h.avg_price ?? 0,
+      });
+    }
+  }
+
+  return Array.from(map.values());
 }

@@ -9,6 +9,62 @@ import { Button } from "@/components/ui/button";
 import { useUiStore } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
 
+type SnapshotSource = "fresh" | "cache" | "fallback" | null;
+
+function useSnapshotSource() {
+  const [source, setSource] = useState<SnapshotSource>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  useEffect(() => {
+    const s = sessionStorage.getItem("snapshot-source") as SnapshotSource;
+    setSource(s);
+    setLastUpdated(sessionStorage.getItem("snapshot-last-updated"));
+  }, []);
+
+  return { source, lastUpdated };
+}
+
+function SnapshotBadge() {
+  const { source, lastUpdated } = useSnapshotSource();
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    // Auto-hide "fresh" and "cache" badges after 3 seconds
+    if (source === "fresh" || source === "cache") {
+      const timer = setTimeout(() => setVisible(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [source]);
+
+  if (!source || !visible) return null;
+
+  if (source === "fallback") {
+    return (
+      <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+        마지막 업데이트: {lastUpdated ?? "이전"}
+      </span>
+    );
+  }
+
+  if (source === "fresh") {
+    return (
+      <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 animate-fade-out">
+        방금 업데이트
+      </span>
+    );
+  }
+
+  if (source === "cache") {
+    return (
+      <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 animate-fade-out">
+        오늘 데이터
+      </span>
+    );
+  }
+
+  return null;
+}
+
 export function AppHeader() {
   const today = format(new Date(), "yyyy년 M월 d일 (EEE)", { locale: ko });
   const loadingItems = useUiStore((s) => s.loadingItems);
@@ -38,6 +94,7 @@ export function AppHeader() {
           <span className="text-sm text-muted-foreground hidden sm:inline">
             {today}
           </span>
+          <SnapshotBadge />
         </div>
 
         <div className="flex items-center gap-1">

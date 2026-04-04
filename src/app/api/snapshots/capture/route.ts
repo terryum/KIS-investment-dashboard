@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { withAuth } from '@/lib/auth/middleware';
 import { AccountManager, sanitizeError, maskAccountNo } from '@/lib/kis';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { fetchExchangeRates } from '@/lib/exchange';
+import { getTodayKST } from '@/lib/utils/kst';
 
 /**
  * POST /api/snapshots/capture
@@ -15,7 +17,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
     const label = (body as { label?: string }).label ?? null;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayKST();
 
     // Fetch current balances
     const manager = new AccountManager(supabaseAdmin);
@@ -91,6 +93,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fetch exchange rates for overseas holdings
+    const rates = await fetchExchangeRates();
+    const rateMap = new Map(rates.map((r) => [r.currency, r.rate]));
+
     // Insert holding snapshots
     const holdingRows: any[] = [];
 
@@ -119,6 +125,10 @@ export async function POST(request: NextRequest) {
 
     for (const acct of balance.overseas) {
       for (const h of acct.holdings) {
+        const currency = h.tr_crcy_cd || 'USD';
+        const exchangeRate = rateMap.get(currency) ?? rateMap.get('USD') ?? 1;
+        const qty = parseFloat(h.cblc_qty13) || 0;
+        const price = parseFloat(h.ovrs_now_pric1) || 0;
         holdingRows.push({
           snapshot_id: snapshot.id,
           date: today,
@@ -127,15 +137,15 @@ export async function POST(request: NextRequest) {
           name: h.ovrs_item_name,
           market: h.ovrs_excg_cd,
           asset_type: 'stock',
-          quantity: parseFloat(h.cblc_qty13) || 0,
+          quantity: qty,
           avg_price: parseFloat(h.pchs_avg_pric) || 0,
-          current_price: parseFloat(h.ovrs_now_pric1) || 0,
+          current_price: price,
           purchase_amount: parseFloat(h.frcr_pchs_amt1) || 0,
-          evaluation_amount: parseFloat(h.cblc_qty13) * parseFloat(h.ovrs_now_pric1) || 0,
+          evaluation_amount: qty * price || 0,
           pnl: parseFloat(h.frcr_evlu_pfls_amt) || 0,
           pnl_percent: parseFloat(h.evlu_pfls_rt1) || 0,
-          currency: h.tr_crcy_cd || 'USD',
-          exchange_rate: 1,
+          currency,
+          exchange_rate: exchangeRate,
         });
       }
     }

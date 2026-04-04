@@ -90,6 +90,24 @@ export async function cacheClear(): Promise<void> {
   }
 }
 
+export async function cacheGetIgnoreExpiry<T>(key: string): Promise<T | null> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, "readonly");
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.get(key);
+      request.onsuccess = () => {
+        const entry = request.result as CacheEntry | undefined;
+        resolve(entry ? (entry.data as T) : null);
+      };
+      request.onerror = () => resolve(null);
+    });
+  } catch {
+    return null;
+  }
+}
+
 export async function cacheGetTimestamp(key: string): Promise<number | null> {
   try {
     const db = await openDB();

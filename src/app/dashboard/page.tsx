@@ -60,7 +60,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4">
-      <ChangesPopup changes={changeDetection} isReady={changeDetection.isReady} />
+      <ChangesPopup detection={changeDetection} />
       <h2 className="text-2xl font-bold">대시보드</h2>
 
       {/* Top summary row — each card handles its own loading state */}

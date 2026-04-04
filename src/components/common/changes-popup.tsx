@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowUpRight, ArrowDownRight, RefreshCw, Banknote } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,31 +16,30 @@ import type { ChangeDetectionResult } from "@/hooks/use-change-detection";
 const SESSION_KEY = "changes-popup-dismissed";
 
 interface ChangesPopupProps {
-  changes: ChangeDetectionResult;
-  isReady: boolean;
+  detection: ChangeDetectionResult;
 }
 
-export function ChangesPopup({ changes, isReady }: ChangesPopupProps) {
+export function ChangesPopup({ detection }: ChangesPopupProps) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (!isReady || !changes.hasChanges) return;
+    if (!detection.isReady || !detection.hasChanges) return;
     if (sessionStorage.getItem(SESSION_KEY)) return;
     setOpen(true);
-  }, [isReady, changes.hasChanges]);
+  }, [detection.isReady, detection.hasChanges]);
 
   const handleDismiss = () => {
     sessionStorage.setItem(SESSION_KEY, "1");
     setOpen(false);
   };
 
-  if (!changes.hasChanges) return null;
+  const changes = detection.changes;
+  if (!changes || !detection.hasChanges) return null;
 
   const totalChanges =
     changes.newItems.length +
     changes.removedItems.length +
-    changes.quantityChanges.length +
-    changes.cashChanges.length;
+    changes.quantityChanges.length;
 
   return (
     <Dialog open={open} onOpenChange={(val) => { if (!val) handleDismiss(); }}>
@@ -56,8 +55,8 @@ export function ChangesPopup({ changes, isReady }: ChangesPopupProps) {
               title="신규 매수"
               icon={<ArrowUpRight className="size-4 text-red-500" />}
               items={changes.newItems.map((item) => ({
-                left: `${item.name} (${item.ticker})`,
-                right: item.detail,
+                left: `${item.name ?? item.ticker} (${item.ticker})`,
+                right: "",
               }))}
               badgeVariant="default"
             />
@@ -68,8 +67,8 @@ export function ChangesPopup({ changes, isReady }: ChangesPopupProps) {
               title="매도/소멸"
               icon={<ArrowDownRight className="size-4 text-blue-500" />}
               items={changes.removedItems.map((item) => ({
-                left: `${item.name} (${item.ticker})`,
-                right: item.detail,
+                left: `${item.name ?? item.ticker} (${item.ticker})`,
+                right: "",
               }))}
               badgeVariant="destructive"
             />
@@ -79,23 +78,15 @@ export function ChangesPopup({ changes, isReady }: ChangesPopupProps) {
             <Section
               title="수량 변화"
               icon={<RefreshCw className="size-4 text-amber-500" />}
-              items={changes.quantityChanges.map((item) => ({
-                left: `${item.name} (${item.ticker})`,
-                right: item.detail,
-              }))}
+              items={changes.quantityChanges.map((item) => {
+                const diff = item.currentQty - item.previousQty;
+                const sign = diff > 0 ? "+" : "";
+                return {
+                  left: `${item.name ?? item.ticker} (${item.ticker})`,
+                  right: `${item.previousQty}주 → ${item.currentQty}주 (${sign}${diff})`,
+                };
+              })}
               badgeVariant="secondary"
-            />
-          )}
-
-          {changes.cashChanges.length > 0 && (
-            <Section
-              title="현금 유입/유출"
-              icon={<Banknote className="size-4 text-emerald-500" />}
-              items={changes.cashChanges.map((item) => ({
-                left: item.label,
-                right: `${item.diff > 0 ? "+" : ""}${formatKRW(item.diff)}`,
-              }))}
-              badgeVariant="outline"
             />
           )}
         </div>
@@ -129,20 +120,12 @@ function Section({
         {items.map((item, i) => (
           <div key={i} className="flex items-center justify-between gap-2 text-sm">
             <span className="truncate text-muted-foreground">{item.left}</span>
-            <span className="shrink-0 tabular-nums">{item.right}</span>
+            {item.right && (
+              <span className="shrink-0 tabular-nums">{item.right}</span>
+            )}
           </div>
         ))}
       </div>
     </div>
   );
-}
-
-function formatKRW(value: number): string {
-  if (Math.abs(value) >= 1_0000_0000) {
-    return `${(value / 1_0000_0000).toFixed(1)}억원`;
-  }
-  if (Math.abs(value) >= 1_0000) {
-    return `${Math.round(value / 1_0000).toLocaleString()}만원`;
-  }
-  return `${value.toLocaleString()}원`;
 }

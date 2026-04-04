@@ -2,6 +2,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { withCronAuth } from '@/lib/auth/cron';
 import { AccountManager, sanitizeError } from '@/lib/kis';
 import { supabaseAdmin } from '@/lib/supabase/server';
+import { fetchExchangeRates } from '@/lib/exchange';
+import { compareSnapshots, validateSnapshot } from '@/lib/snapshot';
+import type { HoldingSnapshot, SnapshotSummary } from '@/lib/snapshot';
+import { getTodayKST } from '@/lib/utils/kst';
 
 /**
  * POST /api/cron/weekly-snapshot
@@ -12,7 +16,7 @@ export async function POST(request: NextRequest) {
   if (authError) return authError;
 
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayKST();
 
     // Fetch current balances
     const manager = new AccountManager(supabaseAdmin);
@@ -101,6 +105,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fetch exchange rates for overseas holdings
+    const rates = await fetchExchangeRates();
+    const rateMap = new Map(rates.map((r) => [r.currency, r.rate]));
+
     // Insert holding snapshots
     const holdingRows: any[] = [];
 
@@ -129,6 +137,10 @@ export async function POST(request: NextRequest) {
 
     for (const acct of balance.overseas) {
       for (const h of acct.holdings) {
+        const currency = h.tr_crcy_cd || 'USD';
+        const exchangeRate = rateMap.get(currency) ?? rateMap.get('USD') ?? 1;
+        const qty = parseFloat(h.cblc_qty13) || 0;
+        const price = parseFloat(h.ovrs_now_pric1) || 0;
         holdingRows.push({
           snapshot_id: snapshot.id,
           date: today,
@@ -137,15 +149,15 @@ export async function POST(request: NextRequest) {
           name: h.ovrs_item_name,
           market: h.ovrs_excg_cd,
           asset_type: 'stock',
-          quantity: parseFloat(h.cblc_qty13) || 0,
+          quantity: qty,
           avg_price: parseFloat(h.pchs_avg_pric) || 0,
-          current_price: parseFloat(h.ovrs_now_pric1) || 0,
+          current_price: price,
           purchase_amount: parseFloat(h.frcr_pchs_amt1) || 0,
-          evaluation_amount: parseFloat(h.cblc_qty13) * parseFloat(h.ovrs_now_pric1) || 0,
+          evaluation_amount: qty * price || 0,
           pnl: parseFloat(h.frcr_evlu_pfls_amt) || 0,
           pnl_percent: parseFloat(h.evlu_pfls_rt1) || 0,
-          currency: h.tr_crcy_cd || 'USD',
-          exchange_rate: 1,
+          currency,
+          exchange_rate: exchangeRate,
         });
       }
     }
@@ -177,8 +189,63 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin.from('holding_snapshots').insert(holdingRows);
     }
 
+    // Compare with previous snapshot and validate
+    const { data: prevSnapshot } = await supabaseAdmin
+      .from('snapshots')
+      .select('*')
+      .lt('date', today)
+      .order('date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let changes = null;
+    if (prevSnapshot) {
+      const { data: prevHoldings } = await supabaseAdmin
+        .from('holding_snapshots')
+        .select('*')
+        .eq('snapshot_id', prevSnapshot.id);
+
+      if (prevHoldings && prevHoldings.length > 0) {
+        changes = compareSnapshots(
+          prevHoldings as HoldingSnapshot[],
+          holdingRows as HoldingSnapshot[],
+        );
+      }
+
+      const warnings = validateSnapshot(
+        prevSnapshot as SnapshotSummary,
+        snapshot as SnapshotSummary,
+        prevHoldings?.length ?? 0,
+        holdingRows.length,
+      );
+
+      if (changes || warnings.length > 0) {
+        await supabaseAdmin
+          .from('snapshots')
+          .update({
+            details: {
+              changes: changes ?? undefined,
+              warnings: warnings.length > 0 ? warnings : undefined,
+              exchange_rates: Object.fromEntries(rateMap),
+            },
+          })
+          .eq('id', snapshot.id);
+      }
+
+      if (warnings.length > 0) {
+        console.warn(
+          `[weekly-snapshot] Validation warnings for ${today}:`,
+          warnings.map((w) => w.message).join('; '),
+        );
+      }
+    }
+
     return NextResponse.json({
-      data: { snapshot_id: snapshot.id, holdings_count: holdingRows.length },
+      data: {
+        snapshot_id: snapshot.id,
+        holdings_count: holdingRows.length,
+        has_changes: changes !== null,
+      },
     });
   } catch (err) {
     const sanitized = sanitizeError(err);
