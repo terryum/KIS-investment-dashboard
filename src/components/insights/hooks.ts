@@ -2,13 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getStaleTimeUntil6AM } from "@/lib/utils/cache-time";
+import { fetchJsonWithCache } from "@/lib/fetch-with-cache";
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { credentials: "include" });
-  if (!res.ok) throw new Error(`Failed to fetch ${url}`);
-  const json = await res.json();
-  return json.data;
-}
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -46,7 +41,7 @@ export function useNews(ticker?: string) {
 
   return useQuery<NewsItem[]>({
     queryKey: ["market", "news", ticker],
-    queryFn: () => fetchJson(`/api/market/news${qs ? `?${qs}` : ""}`),
+    queryFn: () => fetchJsonWithCache(`/api/market/news${qs ? `?${qs}` : ""}`),
     staleTime: getStaleTimeUntil6AM(),
   });
 }
@@ -70,7 +65,7 @@ export interface Source {
 export function useSources() {
   return useQuery<Source[]>({
     queryKey: ["market", "sources"],
-    queryFn: () => fetchJson("/api/market/sources"),
+    queryFn: () => fetchJsonWithCache("/api/market/sources"),
     staleTime: getStaleTimeUntil6AM(),
   });
 }
@@ -136,7 +131,7 @@ export interface WatchlistItem {
 export function useWatchlist() {
   return useQuery<WatchlistItem[]>({
     queryKey: ["watchlist"],
-    queryFn: () => fetchJson("/api/watchlist"),
+    queryFn: () => fetchJsonWithCache("/api/watchlist"),
     staleTime: getStaleTimeUntil6AM(),
   });
 }

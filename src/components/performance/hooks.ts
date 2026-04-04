@@ -2,13 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getStaleTimeUntil6AM } from "@/lib/utils/cache-time";
+import { fetchJsonWithCache } from "@/lib/fetch-with-cache";
 
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { credentials: "include" });
-  if (!res.ok) throw new Error(`Failed to fetch ${url}`);
-  const json = await res.json();
-  return json.data;
-}
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {
@@ -46,7 +41,7 @@ export function useSnapshots(from?: string, to?: string) {
 
   return useQuery<Snapshot[]>({
     queryKey: ["snapshots", from, to],
-    queryFn: () => fetchJson(`/api/snapshots${qs ? `?${qs}` : ""}`),
+    queryFn: () => fetchJsonWithCache(`/api/snapshots${qs ? `?${qs}` : ""}`),
     staleTime: getStaleTimeUntil6AM(),
   });
 }
@@ -54,7 +49,7 @@ export function useSnapshots(from?: string, to?: string) {
 export function useLatestSnapshot() {
   return useQuery<Snapshot>({
     queryKey: ["snapshots", "latest"],
-    queryFn: () => fetchJson("/api/snapshots/latest"),
+    queryFn: () => fetchJsonWithCache("/api/snapshots/latest"),
     staleTime: getStaleTimeUntil6AM(),
   });
 }
@@ -99,7 +94,7 @@ export function useCashFlows(from?: string, to?: string) {
 
   return useQuery<CashFlow[]>({
     queryKey: ["cash-flows", from, to],
-    queryFn: () => fetchJson(`/api/cash-flows${qs ? `?${qs}` : ""}`),
+    queryFn: () => fetchJsonWithCache(`/api/cash-flows${qs ? `?${qs}` : ""}`),
     staleTime: getStaleTimeUntil6AM(),
   });
 }
@@ -107,7 +102,7 @@ export function useCashFlows(from?: string, to?: string) {
 export function useMonthlyCashFlows() {
   return useQuery<MonthlyCashFlow[]>({
     queryKey: ["cash-flows", "monthly"],
-    queryFn: () => fetchJson("/api/cash-flows/monthly"),
+    queryFn: () => fetchJsonWithCache("/api/cash-flows/monthly"),
     staleTime: getStaleTimeUntil6AM(),
   });
 }
@@ -153,7 +148,7 @@ export function useIncome(year?: number, type?: string) {
 
   return useQuery<Income[]>({
     queryKey: ["income", year, type],
-    queryFn: () => fetchJson(`/api/income${qs ? `?${qs}` : ""}`),
+    queryFn: () => fetchJsonWithCache(`/api/income${qs ? `?${qs}` : ""}`),
     staleTime: getStaleTimeUntil6AM(),
   });
 }
@@ -165,7 +160,7 @@ export function useIncomeSummary(year?: number) {
 
   return useQuery<IncomeSummary[]>({
     queryKey: ["income", "summary", year],
-    queryFn: () => fetchJson(`/api/income/summary${qs ? `?${qs}` : ""}`),
+    queryFn: () => fetchJsonWithCache(`/api/income/summary${qs ? `?${qs}` : ""}`),
     staleTime: getStaleTimeUntil6AM(),
   });
 }

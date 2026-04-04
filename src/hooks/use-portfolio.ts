@@ -2,13 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getStaleTimeUntil6AM } from "@/lib/utils/cache-time";
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { credentials: "include" });
-  if (!res.ok) throw new Error(`Failed to fetch ${url}`);
-  const json = await res.json();
-  return json.data;
-}
+import { fetchJsonWithCache } from "@/lib/fetch-with-cache";
 
 // --- Balance ---
 
@@ -96,7 +90,7 @@ export function usePortfolioBalance(accountNo?: string) {
     : "/api/kis/balance";
   return useQuery({
     queryKey: ["portfolio", "balance", accountNo ?? "all"],
-    queryFn: () => fetchJson<UnifiedBalance>(url),
+    queryFn: () => fetchJsonWithCache<UnifiedBalance>(url),
     staleTime: getStaleTimeUntil6AM(),
   });
 }
@@ -128,7 +122,7 @@ export function useHoldings(accountNo?: string) {
     : "/api/holdings/current";
   return useQuery({
     queryKey: ["holdings", "current", accountNo ?? "all"],
-    queryFn: () => fetchJson<HoldingsData>(url),
+    queryFn: () => fetchJsonWithCache<HoldingsData>(url),
     staleTime: getStaleTimeUntil6AM(),
   });
 }
@@ -154,7 +148,7 @@ export interface ManualAsset {
 export function useManualAssets() {
   return useQuery({
     queryKey: ["manual-assets"],
-    queryFn: () => fetchJson<ManualAsset[]>("/api/manual-assets"),
+    queryFn: () => fetchJsonWithCache<ManualAsset[]>("/api/manual-assets"),
     staleTime: getStaleTimeUntil6AM(),
   });
 }
@@ -179,7 +173,7 @@ export interface Snapshot {
 export function useLatestSnapshot() {
   return useQuery({
     queryKey: ["snapshots", "latest"],
-    queryFn: () => fetchJson<Snapshot>("/api/snapshots/latest"),
+    queryFn: () => fetchJsonWithCache<Snapshot>("/api/snapshots/latest"),
     staleTime: getStaleTimeUntil6AM(),
   });
 }
@@ -191,7 +185,7 @@ export function useSnapshots(from?: string, to?: string) {
   const qs = params.toString();
   return useQuery({
     queryKey: ["snapshots", from, to],
-    queryFn: () => fetchJson<Snapshot[]>(`/api/snapshots${qs ? `?${qs}` : ""}`),
+    queryFn: () => fetchJsonWithCache<Snapshot[]>(`/api/snapshots${qs ? `?${qs}` : ""}`),
     staleTime: getStaleTimeUntil6AM(),
   });
 }
@@ -211,7 +205,7 @@ export function useIncomeSummary(year?: number) {
     : "/api/income/summary";
   return useQuery({
     queryKey: ["income", "summary", year ?? "all"],
-    queryFn: () => fetchJson<IncomeSummary[]>(url),
+    queryFn: () => fetchJsonWithCache<IncomeSummary[]>(url),
     staleTime: getStaleTimeUntil6AM(),
   });
 }
