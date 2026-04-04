@@ -21,7 +21,7 @@ export function ManualAssetsSummaryCard({
           <CardTitle>수동 자산</CardTitle>
         </CardHeader>
         <CardContent>
-          <CardLoading />
+          <CardLoading label="수동 자산 확인 중..." />
         </CardContent>
       </Card>
     );

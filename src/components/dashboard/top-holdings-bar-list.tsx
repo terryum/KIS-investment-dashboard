@@ -29,15 +29,7 @@ export function TopHoldingsBarList({
           <CardTitle>상위 10 종목</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-6 animate-pulse rounded bg-muted"
-                style={{ width: `${100 - i * 15}%` }}
-              />
-            ))}
-          </div>
+          <CardLoading label="보유 종목 정리 중..." />
         </CardContent>
       </Card>
     );

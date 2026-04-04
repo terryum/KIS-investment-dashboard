@@ -25,7 +25,7 @@ export function DailyChangeCard({
           <CardTitle>평가 손익</CardTitle>
         </CardHeader>
         <CardContent>
-          <CardLoading label="손익 데이터 로딩 중..." />
+          <CardLoading label="평가 손익 계산 중..." />
         </CardContent>
       </Card>
     );

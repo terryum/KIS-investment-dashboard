@@ -30,7 +30,7 @@ export function PortfolioValueMiniChart({
         <CardContent>
           <div className="flex items-center justify-center h-[180px] text-sm text-muted-foreground">
             {isLoading ? (
-              <CardLoading />
+              <CardLoading label="자산 추이 조회 중..." />
             ) : (
               "스냅샷 데이터가 없습니다"
             )}

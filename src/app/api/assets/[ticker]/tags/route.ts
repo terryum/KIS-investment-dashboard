@@ -3,6 +3,42 @@ import { withAuth } from '@/lib/auth/middleware';
 import { supabaseAdmin } from '@/lib/supabase/server';
 
 /**
+ * GET /api/assets/[ticker]/tags
+ * Fetch current tags for a specific ticker from assets_master.
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ ticker: string }> },
+) {
+  const authError = await withAuth(request);
+  if (authError) return authError;
+
+  try {
+    const { ticker } = await params;
+
+    const { data, error } = await supabaseAdmin
+      .from('assets_master')
+      .select('ticker, name, tags')
+      .eq('ticker', ticker)
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json(
+        { error: 'Asset not found' },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({ data });
+  } catch {
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 },
+    );
+  }
+}
+
+/**
  * PATCH /api/assets/[ticker]/tags
  * Manually update tags for a specific ticker in assets_master.
  * Body: partial AssetTags object to merge into existing tags.

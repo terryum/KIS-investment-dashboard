@@ -40,7 +40,7 @@ export function AssetAllocationMiniChart({
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[180px]">
-            <CardLoading />
+            <CardLoading label="자산 분류 분석 중..." />
           </div>
         </CardContent>
       </Card>

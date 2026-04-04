@@ -43,7 +43,7 @@ export function AppHeader() {
         <div className="flex items-center gap-1">
           {isLoading && (
             <span className="text-xs text-muted-foreground mr-2 tabular-nums">
-              데이터 로딩 중... ({loaded}/{total})
+              {loadingItems.find((i) => !i.loaded)?.label ?? "데이터"} 조회 중... ({loaded}/{total})
             </span>
           )}
           {showComplete && !isLoading && (

@@ -24,7 +24,7 @@ export function RecentIncomeCard({ data, isLoading }: RecentIncomeCardProps) {
           <CardTitle>올해 인컴</CardTitle>
         </CardHeader>
         <CardContent>
-          <CardLoading />
+          <CardLoading label="배당/이자 내역 조회 중..." />
         </CardContent>
       </Card>
     );

@@ -32,7 +32,7 @@ export function TotalAssetCard({
           <CardTitle>총 자산</CardTitle>
         </CardHeader>
         <CardContent>
-          <CardLoading label="자산 데이터 로딩 중..." />
+          <CardLoading label="계좌별 자산 조회 중..." />
         </CardContent>
       </Card>
     );
